@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的生字庫</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700&family=Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --light-text: #fff;
+            --border-color: #dee2e6;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            background-color: #eef2f7;
+            color: var(--dark-text);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .collapsible-section-header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 10px 15px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .collapsible-section-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--light-text);
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .collapsible-section-header .toggle-icon-section {
+            font-family: 'Material Icons Outlined';
+            font-size: 1.8em;
+            transition: transform 0.3s ease;
+        }
+        .collapsible-section-content {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            background-color: var(--light-text);
+            overflow: visible; 
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out, border-color 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        .collapsible-section-content.is-collapsed {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-width: 0 !important; 
+            opacity: 0;
+            overflow: hidden; 
+        }
+        .collapsible-section-header.is-collapsed .toggle-icon-section {
+            transform: rotate(-90deg);
+        }
+
+        textarea#vocabInput, textarea#quizInput {
+            width: calc(100% - 2px); 
+            min-height: 100px; 
+            max-height: 300px; 
+            padding: 10px; 
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            resize: vertical; 
+            overflow-y: auto !important; 
+            box-sizing: border-box;
+            display: block; 
+        }
+        textarea#quizInput {
+            min-height: 150px;
+            max-height: 350px; 
+        }
+
+        #titleEntrySection { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: calc(100vh - 40px); text-align: center; }
+        .entry-container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: var(--light-text); padding: 30px 40px; border-radius: 15px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); width: 100%; max-width: 550px; }
+        .entry-container h1 { font-size: 2.3em; margin-bottom: 10px; font-weight: 700; color: var(--light-text); }
+        .entry-container p { font-size: 1em; margin-bottom: 20px; color: rgba(255, 255, 255, 0.9); }
+        .entry-container input[type="text"] { width: calc(100% - 24px); padding: 14px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: var(--border-radius); background: rgba(255, 255, 255, 0.2); color: var(--light-text); font-size: 1em; outline: none; transition: background 0.3s, border-color 0.3s; }
+        .entry-container input[type="text"]::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .entry-container input[type="text"]:focus { background: rgba(255, 255, 255, 0.3); border-color: rgba(255, 255, 255, 0.5); }
+        .entry-container button.main-action { width: 100%; padding: 14px; background: #ff6b6b; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-size: 1.1em; font-weight: 500; transition: background-color 0.3s ease, transform 0.2s ease; margin-top: 10px; }
+        .entry-container button.main-action:hover { background-color: #ff4757; transform: translateY(-2px); }
+        .entry-container button.main-action:active { transform: translateY(0); }
+        
+        #existingBanksListContainer { 
+            margin-top: 20px; 
+            margin-bottom: 15px; 
+            max-height: 180px; 
+            overflow-y: auto; 
+            padding: 10px 5px; /* Adjusted padding */
+            background: rgba(0,0,0,0.1); 
+            border-radius: var(--border-radius); 
+        }
+        .existing-bank-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 5px auto;
+            width: calc(100% - 10px); 
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .existing-bank-item-wrapper:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .existing-bank-item {
+            flex-grow: 1;
+            padding: 10px;
+            color: var(--light-text);
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .delete-bank-icon {
+            font-family: 'Material Icons Outlined';
+            font-size: 1.3em; 
+            color: rgba(255, 255, 255, 0.5); 
+            cursor: pointer;
+            padding: 8px; 
+            margin-left: 5px; 
+            border-radius: 50%;
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .existing-bank-item-wrapper:hover .delete-bank-icon {
+            color: rgba(255, 107, 107, 0.8); 
+        }
+        .delete-bank-icon:hover {
+            color: #ff6b6b !important; 
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .no-banks-message { 
+            color: rgba(255,255,255,0.7); 
+            font-style: italic; 
+            text-align: center;
+        }
+
+        #debugErrorDisplay { background-color: #ffdddd; border: 1px solid #ff0000; color: #ff0000; padding: 10px; margin-top: 15px; border-radius: var(--border-radius); font-size: 0.9em; white-space: pre-wrap; word-break: break-all; text-align: left; }
+        #vocabDetailsSection { }
+        .page-header { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: var(--light-text); border-radius: var(--border-radius); box-shadow: var(--card-shadow); }
+        .page-header h1 { margin: 0; font-size: 2.2em; font-weight: 700; color: var(--light-text); }
+        .page-header .back-link { color: #ffdd57; text-decoration: none; font-size: 0.9em; display: inline-block; margin-top: 10px; cursor: pointer; }
+        .page-header .back-link:hover { text-decoration: underline; }
+        .container { width: 100%; max-width: 950px; margin: 0 auto 25px auto; border-radius: var(--border-radius); box-shadow: var(--card-shadow); }
+        .container:not(:has(> .collapsible-section-header)) { background: var(--light-text); padding: 25px 30px; }
+        h2 { color: var(--primary-color); text-align: left; margin-top: 0; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); font-size: 1.8em; }
+        .button-group { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        #vocabDetailsSection button { padding: 12px 20px; color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-size: 1rem; font-weight: 500; transition: background-color 0.2s ease, transform 0.1s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        #vocabDetailsSection button .material-icons-outlined { font-size: 1.2em; }
+        button.primary { background-color: var(--primary-color); } button.primary:hover { background-color: #0056b3; transform: translateY(-1px); }
+        button.success { background-color: var(--success-color); } button.success:hover { background-color: #1e7e34; transform: translateY(-1px); }
+        button.secondary { background-color: var(--secondary-color); } button.secondary:hover { background-color: #545b62; transform: translateY(-1px); }
+        button.danger { background-color: var(--danger-color); } button.danger:hover { background-color: #b02a37; transform: translateY(-1px); }
+        button.warning { background-color: var(--warning-color); color: var(--dark-text) !important; } button.warning:hover { background-color: #e0a800; transform: translateY(-1px); }
+        .list-item-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .list-item-text { flex-grow: 1; }
+        .delete-icon { font-family: 'Material Icons Outlined'; font-size: 1.5em; color: var(--secondary-color); cursor: pointer; padding: 5px; margin-left: 10px; border-radius: 50%; transition: color 0.2s, background-color 0.2s; }
+        .delete-icon:hover { color: var(--danger-color); background-color: rgba(220, 53, 69, 0.1); }
+        #vocabListContainer .vocab-entry { background-color: #fdfdff; margin-bottom: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
+        .vocab-summary { padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: var(--light-bg); transition: background-color 0.2s ease; }
+        .vocab-summary:hover { background-color: #e9ecef; }
+        .vocab-summary .word-main { font-size: 1.3em; font-weight: 500; color: var(--primary-color); }
+        .vocab-summary .pos-short { font-size: 0.9em; color: var(--secondary-color); margin-left: 10px; background-color: #e0e0e0; padding: 2px 6px; border-radius: 4px; }
+        .toggle-icon { font-family: 'Material Icons Outlined'; font-size: 1.8em; color: var(--primary-color); transition: transform 0.3s ease; margin-left: 10px; }
+        .vocab-entry.is-expanded .toggle-icon { transform: rotate(45deg); }
+        .vocab-details-content { padding: 0 20px 15px 20px; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; border-top: 1px solid var(--border-color); }
+        .vocab-entry.is-expanded .vocab-details-content { max-height: 2000px; padding-top: 15px; padding-bottom: 15px; }
+        .vocab-details-content p, .vocab-details-content ul { margin-bottom: 10px; }
+        .vocab-details-content .label { font-weight: bold; color: var(--primary-color); }
+        .vocab-details-content ul { list-style-type: none; padding-left: 0; }
+        .vocab-details-content ul li { margin-bottom: 8px; }
+        .vocab-details-content .sub-list { margin-left: 20px; border-left: 2px solid var(--primary-color); padding-left: 15px; }
+        .vocab-details-content .example-pair, .vocab-details-content .usage-item { margin-bottom: 10px; padding: 10px; background-color: #fff; border: 1px solid #e9ecef; border-radius: 4px; }
+        .vocab-details-content .chinese-translation, .vocab-details-content .usage-translation, .vocab-details-content .example-chinese { margin-left: 15px; color: #555; font-style: italic; }
+        .vocab-details-content .youglish-link { display: inline-block; margin-top: 5px; padding: 6px 12px; background-color: var(--success-color); color: white !important; text-decoration: none; border-radius: 4px; font-size: 0.9em; }
+        .vocab-details-content .youglish-link:hover { background-color: #1e7e34; }
+        #flashcardSection { }
+        .flashcard-container { perspective: 1200px; width: 100%; max-width: 400px; height: 250px; margin: 25px auto; cursor: pointer; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+        .flashcard.is-flipped { transform: rotateY(180deg); }
+        .flashcard-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 25px; box-sizing: border-box; border-radius: 12px; font-size: 1.1em; overflow-y: auto; text-align: center; }
+        .flashcard-front { background: linear-gradient(45deg, var(--primary-color), #0056b3); color: white; }
+        .flashcard-front .word { font-size: 2em; font-weight: 700; margin-bottom: 8px; }
+        .flashcard-front .pos { font-size: 1.1em; opacity: 0.9; }
+        .flashcard-back { background-color: var(--light-bg); color: var(--dark-text); transform: rotateY(180deg); font-size: 1em; text-align: left; align-items: flex-start; justify-content: flex-start; padding-top: 30px; }
+        .flashcard-back p { margin-bottom: 12px; width: 100%; }
+        .flashcard-back strong { color: var(--primary-color); }
+        .flashcard-nav { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        #vocabDetailsSection .flashcard-nav button { flex-grow: 0; width: auto; padding: 10px 18px; }
+        #noFlashcardMessage { text-align: center; color: var(--secondary-color); margin-top: 20px; padding: 15px; background-color: var(--light-bg); border-radius: var(--border-radius); }
+        #flashcardStatus { text-align: center; margin-top: 10px; color: var(--secondary-color); font-size: 0.9em; }
+        #quizListContainer .quiz-item-summary { background-color: #fdfdff; margin-bottom: 10px; border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 12px 15px; cursor: default; display: flex; justify-content: space-between; align-items: center; }
+        #quizListContainer .quiz-item-summary:hover { background-color: #e9ecef; }
+        #quizListContainer .quiz-item-summary .list-item-text { font-weight: 500; cursor: pointer; }
+        #quizAnsweringArea .quiz-question-item { background-color: #fdfdff; margin-bottom: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 15px 20px; }
+        #quizAnsweringArea .quiz-question-item input[type="text"] { width: calc(100% - 22px); padding: 8px; margin-top: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+        #quizAnsweringArea .quiz-question-item .feedback { margin-top: 5px; font-size: 0.9em; }
+        #quizAnsweringArea .quiz-question-item .feedback .material-icons-outlined { vertical-align: middle; margin-right: 4px;}
+        #quizAnsweringArea .quiz-question-item .feedback.correct { color: var(--success-color); }
+        #quizAnsweringArea .quiz-question-item .feedback.incorrect { color: var(--danger-color); }
+        #quizAnsweringArea .quiz-question-item .correct-answer-display { font-style: italic; color: var(--secondary-color); font-size: 0.9em; margin-top: 3px; }
+        
+        .quiz-options-group {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .quiz-option-label {
+            display: block; 
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .quiz-option-label:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .quiz-option-label input[type="radio"] {
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .hidden { display: none !important; }
+        @media (max-width: 768px) { .entry-container { padding: 30px 25px; } .entry-container h1 { font-size: 2em; } .entry-container input[type="text"], .entry-container button.main-action { font-size: 1em; padding: 12px; } #existingBanksListContainer { max-height: 150px; } .existing-bank-item-wrapper { /* Ensure responsiveness */ flex-wrap: wrap; } .existing-bank-item { font-size: 0.9em; padding: 8px; } .container:not(:has(> .collapsible-section-header)) { padding: 20px; } .collapsible-section-content { padding: 15px; } .page-header h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } .collapsible-section-header h2 { font-size: 1.3em; } .button-group { flex-direction: column; } #vocabDetailsSection .button-group button { width: 100%; } .flashcard-container { max-width: 320px; height: 220px; } .flashcard-front .word { font-size: 1.6em; } .flashcard-back { font-size: 0.9em; } }
+        @media (max-width: 480px) { .vocab-summary .word-main { font-size: 1.1em; } .vocab-summary .pos-short { font-size: 0.8em; } .toggle-icon, .delete-icon { font-size: 1.5em; } .collapsible-section-header .toggle-icon-section { font-size: 1.5em; } .delete-bank-icon { font-size: 1.2em; padding: 6px;} }
+    </style>
+</head>
+<body>
+    <!-- HTML結構 (與上一版本相同) -->
+    <section id="titleEntrySection">
+        <div class="entry-container">
+            <h1>我的生字庫</h1>
+            <p>請輸入新的生字庫標題，或從下方列表選擇：</p>
+            <input type="text" id="vocabTitleInput" placeholder="例如：雅思核心詞彙">
+            <div id="existingBanksListContainer"></div>
+            <button class="main-action" onclick="initializeVocabDetails()">進入 / 創建生字庫</button>
+            <div id="debugErrorDisplay" class="hidden"></div>
+        </div>
+    </section>
+
+    <section id="vocabDetailsSection" class="hidden">
+        <div class="page-header">
+            <h1 id="currentVocabTitleDisplay">生字庫標題</h1>
+            <span class="back-link" onclick="goBackToTitleSelection()">&larr; 返回選擇其他生字庫</span>
+        </div>
+
+        <div class="container">
+            <div class="collapsible-section-header" id="addVocabSectionHeader">
+                <h2>新增生字</h2>
+                <span class="toggle-icon-section material-icons-outlined">expand_more</span>
+            </div>
+            <div class="collapsible-section-content is-collapsed" id="addVocabSectionContent">
+                <textarea id="vocabInput" placeholder="在此輸入生字內容，每個生字以 '-' 開頭..."></textarea>
+                <div class="button-group">
+                    <button onclick="processAndDisplay()" class="primary"><span class="material-icons-outlined">playlist_add_check</span>解析</button>
+                    <button onclick="addProcessedToBank()" class="success"><span class="material-icons-outlined">add_to_photos</span>新增已解析</button>
+                    <button onclick="forceSaveBank()" class="warning"><span class="material-icons-outlined">save</span>明確儲存此字庫</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h2><span id="activeVocabTitleForList"></span> - 生字列表</h2>
+            <div class="button-group">
+                 <button onclick="loadFromBankAndDisplay()" class="secondary"><span class="material-icons-outlined">refresh</span>從此字庫載入</button>
+                 <button onclick="clearBank()" class="danger"><span class="material-icons-outlined">delete_sweep</span>清空此字庫</button>
+            </div>
+            <div id="vocabListContainer"></div>
+        </div>
+
+        <div class="container" id="flashcardSection">
+            <h2>FlashCard 學習</h2>
+            <div id="flashcardDisplayArea">
+                 <div class="flashcard-container" id="flashcardContainerElement" style="display:none;">
+                    <div class="flashcard" id="flashcardElement">
+                        <div class="flashcard-face flashcard-front">
+                            <div class="word">單字</div>
+                            <div class="pos">(詞性)</div>
+                        </div>
+                        <div class="flashcard-face flashcard-back"></div>
+                    </div>
+                </div>
+                <div class="flashcard-nav" style="display:none;">
+                    <button onclick="prevFlashcard()"><span class="material-icons-outlined">skip_previous</span>上一個</button>
+                    <button onclick="flipFlashcard()" class="primary"><span class="material-icons-outlined">flip_camera_android</span>翻轉</button>
+                    <button onclick="nextFlashcard()"><span class="material-icons-outlined">skip_next</span>下一個</button>
+                </div>
+            </div>
+            <p id="noFlashcardMessage">此字庫中沒有生字可供FlashCard學習。</p>
+            <p id="flashcardStatus"></p>
+        </div>
+        
+        <div class="container">
+             <div class="collapsible-section-header" id="addQuizSectionHeader">
+                <h2>新增練習題</h2>
+                <span class="toggle-icon-section material-icons-outlined">expand_more</span>
+            </div>
+            <div class="collapsible-section-content is-collapsed" id="addQuizSectionContent">
+                <textarea id="quizInput" placeholder="在此輸入練習題內容，格式如下：\n練習題標題 (第一行)\n1. 題目內容 __________。\n   - (A) 選項A\n   - (B) 選項B\n2. 另一題目 __________。\n**答案：** (或 Answers: 或 【答案】)\n1. 答案一 (填充題) / B (MC題)\n2. 答案二\n..." style="min-height: 250px;"></textarea>
+                <div class="button-group">
+                    <button onclick="processAndAddQuiz()" class="primary"><span class="material-icons-outlined">note_add</span>解析並新增練習題</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <h2>練習題列表</h2>
+            <div id="quizListContainer"><p>此字庫暫無練習題。</p></div>
+        </div>
+
+        <div class="container hidden" id="quizAnsweringSection">
+            <h2 id="currentQuizTitleDisplay">練習題標題</h2>
+            <div id="quizAnsweringArea"></div>
+            <div class="button-group" style="margin-top: 20px;">
+                <button onclick="submitQuiz()" class="success"><span class="material-icons-outlined">check_circle</span>提交答案</button>
+                <button onclick="hideQuizAnsweringArea()" class="secondary"><span class="material-icons-outlined">arrow_back</span>返回練習題列表</button>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        // --- Global Variables & DOM Element Refs (as before) ---
+        let vocabularyBank = { words: [], quizzes: [] };
+        let currentProcessedData = [];
+        let currentProcessedQuiz = null;
+        let currentFlashcardIndex = 0;
+        let currentQuizForAnswering = null;
+        let VOCAB_TITLE = '';
+        let VOCAB_STORAGE_KEY = '';
+
+        let titleEntrySection, vocabDetailsSection, vocabTitleInput, existingBanksListContainer,
+            currentVocabTitleDisplay, activeVocabTitleForList, vocabListContainer, vocabInput,
+            flashcardContainerElement, flashcardNavElement, noFlashcardMessageElement,
+            flashcardStatusElement, flashcardElement, debugErrorDisplayElement,
+            addVocabSectionHeader, addVocabSectionContent,
+            addQuizSectionHeader, addQuizSectionContent, quizInput,
+            quizListContainer, quizAnsweringSection, currentQuizTitleDisplay, quizAnsweringArea;
+        
+        // --- Utility Functions (displayDebugError, clearDebugError) ---
+        function displayDebugError(message, errorObject = null) {
+            if (debugErrorDisplayElement) {
+                let fullMessage = message;
+                if (errorObject) {
+                    fullMessage += `\n詳細錯誤: ${errorObject.name} - ${errorObject.message}`;
+                    if (errorObject.stack) { fullMessage += `\n堆疊追蹤: ${errorObject.stack}`; }
+                }
+                debugErrorDisplayElement.textContent = fullMessage;
+                debugErrorDisplayElement.classList.remove('hidden');
+                console.error(message, errorObject);
+            } else {
+                console.error("debugErrorDisplayElement not found. Error:", message, errorObject);
+                alert(message + (errorObject ? `\nError: ${errorObject.message}`: ''));
+            }
+        }
+        function clearDebugError() {
+            if (debugErrorDisplayElement) {
+                debugErrorDisplayElement.classList.add('hidden');
+                debugErrorDisplayElement.textContent = '';
+            }
+        }
+
+        // --- Core Bank Functions (listExistingBanks, initializeVocabDetails, goBack..., saveToBank, loadFromBank, clearBank) ---
+        function listExistingBanks() {
+            if (!existingBanksListContainer) return;
+            existingBanksListContainer.innerHTML = '';
+            const banks = [];
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('myVocabularyBank_')) {
+                        try {
+                            const title = decodeURIComponent(key.substring('myVocabularyBank_'.length));
+                            if (title) banks.push(title);
+                        } catch (e) { console.error("Error decoding bank title from key:", key, e); }
+                    }
+                }
+            } catch (e) {
+                console.error("[listExistingBanks] Error accessing localStorage properties:", e);
+                displayDebugError("無法列出已儲存的字庫：讀取localStorage時發生錯誤。", e);
+            }
+
+            if (banks.length > 0) {
+                banks.sort().forEach(title => {
+                    const bankItemWrapper = document.createElement('div'); 
+                    bankItemWrapper.className = 'existing-bank-item-wrapper';
+
+                    const bankItem = document.createElement('div');
+                    bankItem.className = 'existing-bank-item';
+                    bankItem.textContent = title;
+                    bankItem.onclick = () => { 
+                        vocabTitleInput.value = title; 
+                        initializeVocabDetails(); 
+                    };
+
+                    const deleteBankIcon = document.createElement('span');
+                    deleteBankIcon.className = 'delete-bank-icon material-icons-outlined';
+                    deleteBankIcon.textContent = 'close'; 
+                    deleteBankIcon.title = `刪除生字庫 "${title}"`;
+                    deleteBankIcon.onclick = (event) => {
+                        event.stopPropagation(); 
+                        deleteVocabBank(title);
+                    };
+                    
+                    bankItemWrapper.appendChild(bankItem);
+                    bankItemWrapper.appendChild(deleteBankIcon);
+                    existingBanksListContainer.appendChild(bankItemWrapper);
+                });
+            } else {
+                existingBanksListContainer.innerHTML = '<p class="no-banks-message">暫無已儲存的生字庫。</p>';
+            }
+        }
+
+        function deleteVocabBank(titleToDelete) {
+            if (!titleToDelete) return;
+            if (confirm(`您確定要永久刪除生字庫 "${titleToDelete}" 嗎？此操作無法撤銷。`)) {
+                const bankKeyToDelete = `myVocabularyBank_${encodeURIComponent(titleToDelete)}`;
+                try {
+                    localStorage.removeItem(bankKeyToDelete);
+                    console.log(`[Delete Bank] Successfully deleted bank: ${titleToDelete} (Key: ${bankKeyToDelete})`);
+                    alert(`生字庫 "${titleToDelete}" 已被刪除。`);
+
+                    if (VOCAB_STORAGE_KEY === bankKeyToDelete) {
+                        console.log("[Delete Bank] Active bank was deleted. Returning to title selection.");
+                        goBackToTitleSelection(); 
+                    } else {
+                        listExistingBanks(); 
+                    }
+                    
+                    if (vocabTitleInput && vocabTitleInput.value === titleToDelete) {
+                        vocabTitleInput.value = "";
+                    }
+
+                } catch (e) {
+                    displayDebugError(`刪除生字庫 "${titleToDelete}" 時發生錯誤。`, e);
+                }
+            }
+        }
+
+
+        function initializeVocabDetails() {
+            console.log("--- initializeVocabDetails called ---");
+            clearDebugError();
+            if (!vocabTitleInput || !titleEntrySection || !vocabDetailsSection /*... more checks ...*/) {
+                displayDebugError("[Initialize Error] Critical DOM elements missing."); return;
+            }
+            try {
+                const title = vocabTitleInput.value.trim();
+                if (title === "") { alert("請先生效一個生字庫標題！"); vocabTitleInput.focus(); return; }
+                VOCAB_TITLE = title;
+                VOCAB_STORAGE_KEY = `myVocabularyBank_${encodeURIComponent(VOCAB_TITLE)}`;
+                let localStorageAvailable = false;
+                try {
+                    localStorage.setItem('__test__', 't'); localStorage.removeItem('__test__');
+                    localStorageAvailable = true; console.log("[Initialize] localStorage test successful.");
+                } catch (e) {
+                    console.error("[Initialize] localStorage test failed:", e);
+                    let ed = `錯誤：localStorage無法使用。\n原因：\n1. 隱私模式。\n2. 禁用Cookies/網站數據。\n3. iframe/srcdoc環境限制。\n4. 空間已滿。\n儲存功能受限。`;
+                    if (e.name === 'SecurityError') ed += "\n偵測到SecurityError。";
+                    displayDebugError(ed, e);
+                }
+                const storedData = localStorage.getItem(VOCAB_STORAGE_KEY);
+                if (!storedData) {
+                    console.log(`[Initialize] New bank "${VOCAB_TITLE}".`);
+                    if (!localStorageAvailable) {
+                        displayDebugError(`[Initialize] 無法註冊新庫 "${VOCAB_TITLE}"，localStorage無法運作。`); return;
+                    }
+                    try {
+                        vocabularyBank = { words: [], quizzes: [] };
+                        localStorage.setItem(VOCAB_STORAGE_KEY, JSON.stringify(vocabularyBank));
+                        console.log(`[Initialize] Registered new bank key "${VOCAB_STORAGE_KEY}".`);
+                    } catch (e) { displayDebugError(`[Initialize] 註冊新庫 "${VOCAB_TITLE}" 時儲存錯誤:`, e); return; }
+                }
+                currentVocabTitleDisplay.textContent = `生字庫：${VOCAB_TITLE}`;
+                activeVocabTitleForList.textContent = VOCAB_TITLE;
+                titleEntrySection.classList.add('hidden');
+                vocabDetailsSection.classList.remove('hidden');
+                loadFromBankAndDisplay();
+            } catch (error) {
+                displayDebugError("[Initialize Error] Unexpected error:", error);
+                goBackToTitleSelectionOnError();
+            }
+        }
+        
+        function goBackToTitleSelectionOnError() {
+            console.warn("Error occurred, returning to title selection.");
+            if (vocabDetailsSection) vocabDetailsSection.classList.add('hidden');
+            if (titleEntrySection) titleEntrySection.classList.remove('hidden');
+            VOCAB_TITLE = ''; VOCAB_STORAGE_KEY = '';
+            if(existingBanksListContainer) listExistingBanks();
+        }
+
+        function goBackToTitleSelection() {
+            if (vocabDetailsSection) vocabDetailsSection.classList.add('hidden');
+            if (titleEntrySection) titleEntrySection.classList.remove('hidden');
+            vocabularyBank = { words: [], quizzes: [] };
+            currentProcessedData = []; currentProcessedQuiz = null; currentFlashcardIndex = 0; currentQuizForAnswering = null;
+            if (vocabListContainer) vocabListContainer.innerHTML = ''; 
+            if (quizListContainer) quizListContainer.innerHTML = '<p>此字庫暫無練習題。</p>';
+            if (quizAnsweringSection) quizAnsweringSection.classList.add('hidden');
+            updateFlashcardDisplay();
+            if (vocabInput) vocabInput.value = ''; if (quizInput) quizInput.value = '';
+            VOCAB_TITLE = ''; VOCAB_STORAGE_KEY = '';
+            if(existingBanksListContainer) listExistingBanks();
+            console.log("Returned to title selection, state reset.");
+        }
+        function saveToBank() {
+            if (!VOCAB_STORAGE_KEY) { alert("錯誤：未設定有效庫標題，無法儲存。"); return false; }
+            try {
+                const dataToSave = JSON.stringify(vocabularyBank); localStorage.setItem(VOCAB_STORAGE_KEY, dataToSave);
+                console.log(`[Save Success] Bank to "${VOCAB_STORAGE_KEY}". W:${vocabularyBank.words.length}, Q:${vocabularyBank.quizzes.length}`);
+                const chk = localStorage.getItem(VOCAB_STORAGE_KEY); if (chk === dataToSave) console.log(`[Save Verify] OK.`); else { console.error(`[Save Verify Failed]`); return false; }
+                return true;
+            } catch (e) { displayDebugError(`儲存失敗 (庫: ${VOCAB_TITLE})。\nlocalStorage無法使用。\n錯誤: ${e.name} - ${e.message}`, e); return false; }
+        }
+        function forceSaveBank() { if (!VOCAB_TITLE) { alert("錯誤：無有效庫標題。"); return; } if (saveToBank()) alert(`庫 "${VOCAB_TITLE}" 已儲存！`); else console.log(`[Force Save] Failed.`); }
+
+        function loadFromBank() {
+            if (!VOCAB_STORAGE_KEY) { vocabularyBank = { words: [], quizzes: [] }; return false; }
+            try {
+                const storedData = localStorage.getItem(VOCAB_STORAGE_KEY);
+                if (storedData) {
+                    try {
+                        const raw = JSON.parse(storedData);
+                        if (Array.isArray(raw)) vocabularyBank = { words: raw, quizzes: [] };
+                        else if (typeof raw === 'object' && raw !== null && Array.isArray(raw.words)) vocabularyBank = { words: raw.words, quizzes: Array.isArray(raw.quizzes) ? raw.quizzes : [] };
+                        else vocabularyBank = { words: [], quizzes: [] };
+                        console.log(`[Load OK] W:${vocabularyBank.words.length}, Q:${vocabularyBank.quizzes.length}`); return true;
+                    } catch (e) { console.error(`[Load Error] Parse failed:`, e); vocabularyBank = { words: [], quizzes: [] }; return false; }
+                } vocabularyBank = { words: [], quizzes: [] }; return false;
+            } catch (e) { displayDebugError(`讀取庫 "${VOCAB_TITLE}" 錯誤。localStorage受限?`, e); vocabularyBank = { words: [], quizzes: [] }; return false; }
+        }
+        function clearBank() {
+            if (!VOCAB_TITLE) { alert("錯誤：未選庫。"); return; }
+            if (confirm(`確定清空庫 "${VOCAB_TITLE}" 的所有生字和練習題嗎？`)) {
+                vocabularyBank = { words: [], quizzes: [] }; currentProcessedData = []; currentProcessedQuiz = null;
+                if (VOCAB_STORAGE_KEY) { try { localStorage.setItem(VOCAB_STORAGE_KEY, JSON.stringify(vocabularyBank)); } catch (e) { displayDebugError(`清空庫 "${VOCAB_TITLE}" 時儲存失敗。`, e); } }
+                renderCollapsibleVocabularyList(vocabularyBank.words); renderQuizList(vocabularyBank.quizzes);
+                currentFlashcardIndex = 0; updateFlashcardDisplay(); alert(`庫 "${VOCAB_TITLE}" 已清空。`);
+            }
+        }
+        function loadFromBankAndDisplay() {
+            console.log("[Load & Display] Called.");
+            try {
+                if (!VOCAB_TITLE) { if(vocabListContainer) renderCollapsibleVocabularyList([]); if(quizListContainer) renderQuizList([]); updateFlashcardDisplay(); return; }
+                loadFromBank();
+                if (typeof renderCollapsibleVocabularyList === 'function') { if(vocabListContainer) renderCollapsibleVocabularyList(vocabularyBank.words); else console.error("vocabListContainer null."); } else displayDebugError("錯誤：renderCollapsibleVocabularyList未定義。");
+                if (typeof renderQuizList === 'function') { if(quizListContainer) renderQuizList(vocabularyBank.quizzes); else console.error("quizListContainer null."); } else displayDebugError("錯誤：renderQuizList未定義。");
+                currentFlashcardIndex = 0; updateFlashcardDisplay();
+            } catch (error) { displayDebugError("載入並顯示時錯誤。", error); if(vocabListContainer) renderCollapsibleVocabularyList([]); if(quizListContainer) renderQuizList([]); updateFlashcardDisplay(); }
+        }
+
+        // --- Vocabulary Parsing and Display ---
+        function parseVocabularyText(text) {
+            console.log("--- Starting parseVocabularyText (ADJUSTED IF/ELSE ORDER FOR SUB-DETAILS v2 + YouGlish fix) ---");
+            const entries = [];
+            const lines = text.split('\n');
+            let currentEntry = null;
+            let currentDetailField = null;
+            let detailBuffer = [];
+
+            function completeAndPushEntry() {
+                if (currentEntry) {
+                    if (currentDetailField && detailBuffer.length > 0) {
+                        processDetailBuffer();
+                    }
+                    if (currentEntry.word && currentEntry.word.trim() !== "" && !currentEntry.youglishLink) {
+                        currentEntry.youglishLink = `https://youglish.com/pronounce/${encodeURIComponent(currentEntry.word)}/english`;
+                    }
+                    if (currentEntry.word && currentEntry.word.trim() !== "") {
+                        entries.push(currentEntry);
+                        console.log(">>>> Pushed entry:", JSON.parse(JSON.stringify(currentEntry)));
+                    }
+                }
+                currentEntry = null;
+                currentDetailField = null;
+                detailBuffer = [];
+            }
+
+            function processDetailBuffer() {
+                if (!currentEntry || !currentDetailField || detailBuffer.length === 0) return;
+                if (currentDetailField === "例句") {
+                    let currentExample = null;
+                    detailBuffer.forEach(lineObj => {
+                        if (lineObj.indent === 4) {
+                            if (currentExample) currentEntry.exampleSentences.push(currentExample);
+                            currentExample = { english: lineObj.text, chinese: "" };
+                        } else if (lineObj.indent === 6 && currentExample) {
+                            currentExample.chinese = lineObj.text;
+                        }
+                    });
+                    if (currentExample) currentEntry.exampleSentences.push(currentExample);
+                } else if (currentDetailField === "不同用法") {
+                    let currentUsage = null;
+                    let currentUsageExample = null;
+                    detailBuffer.forEach(lineObj => {
+                        if (lineObj.indent === 4) {
+                            if (currentUsage) currentEntry.differentUsages.push(currentUsage);
+                            const usageMatch = lineObj.text.match(/^(.*?)\s*\((.*?)\)\s*(?:-\s*(.*))?$/);
+                            currentUsage = usageMatch ?
+                                { usage: usageMatch[1].trim(), pos: usageMatch[2].trim(), translation: (usageMatch[3] || "").trim(), examples: [] } :
+                                { usage: lineObj.text.trim(), pos: "", translation: "", examples: [] };
+                            currentUsageExample = null;
+                        } else if (lineObj.indent === 6 && currentUsage) {
+                            if (currentUsageExample) currentUsage.examples.push(currentUsageExample);
+                            currentUsageExample = { english: lineObj.text, chinese: "" };
+                        } else if (lineObj.indent === 8 && currentUsageExample) {
+                            currentUsageExample.chinese = lineObj.text;
+                        }
+                    });
+                    if (currentUsageExample && currentUsage) currentUsage.examples.push(currentUsageExample);
+                    if (currentUsage) currentEntry.differentUsages.push(currentUsage);
+                }
+                detailBuffer = [];
+                currentDetailField = null;
+            }
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmedLine = line.trim();
+
+                console.log(`\n[LINE ${i + 1}] Raw: "${line}" --- Trimmed: "${trimmedLine}" --- CE: ${currentEntry ? `"${currentEntry.word}"` : "NULL"}, DF: ${currentDetailField}`);
+
+                const subSubSubDetailLineRegex = /^\s{8}-\s+/; 
+                const subSubDetailLineRegex = /^\s{6}-\s+/;   
+                const subDetailLineRegex = /^\s{4}-\s+/;      
+                const detailLineRegex = /^\s\s-\s+/;         
+                
+                let handledThisLine = false;
+
+                if (currentEntry && currentDetailField) {
+                    if (subSubSubDetailLineRegex.test(line)) {
+                        console.log(`  [SUB-SUB-SUB-DETAIL LINE (indent 8)] for "${currentDetailField}"`);
+                        const textContent = line.substring(line.match(subSubSubDetailLineRegex)[0].length).trim();
+                        detailBuffer.push({ text: textContent, indent: 8 });
+                        console.log(`    Added to detailBuffer: "${textContent}" with indent 8`);
+                        handledThisLine = true;
+                    } else if (subSubDetailLineRegex.test(line)) {
+                        console.log(`  [SUB-SUB-DETAIL LINE (indent 6)] for "${currentDetailField}"`);
+                        const textContent = line.substring(line.match(subSubDetailLineRegex)[0].length).trim();
+                        detailBuffer.push({ text: textContent, indent: 6 });
+                        console.log(`    Added to detailBuffer: "${textContent}" with indent 6`);
+                        handledThisLine = true;
+                    } else if (subDetailLineRegex.test(line)) { 
+                        console.log(`  [SUB-DETAIL LINE (indent 4)] for "${currentDetailField}"`);
+                        const textContent = line.substring(line.match(subDetailLineRegex)[0].length).trim();
+                        detailBuffer.push({ text: textContent, indent: 4 });
+                        console.log(`    Added to detailBuffer: "${textContent}" with indent 4`);
+                        handledThisLine = true;
+                    }
+                }
+
+                if (handledThisLine) {
+                    // continue to next line in the loop
+                } else if (detailLineRegex.test(line)) { 
+                    if (currentEntry) {
+                        console.log(`  [MAIN DETAIL LINE (2 spaces)] for "${currentEntry.word}"`);
+                        if (currentDetailField && detailBuffer.length > 0) {
+                            console.log(`    Processing pending detailBuffer for field: ${currentDetailField}`);
+                            processDetailBuffer(); 
+                        }
+
+                        const match = line.match(detailLineRegex);
+                        const prefixLength = match[0].length;
+                        const content = line.substring(prefixLength).trim();
+                        
+                        console.log(`    Detail content to parse: "${content}"`);
+                        let fieldMatchedOnThisLine = false;
+                        const contentLowerNoSpace = content.toLowerCase().replace(/\s+/g, ''); // For YouGlish check
+
+
+                        if (content.startsWith("劍橋中譯：")) { currentEntry.cambridgeTranslation = content.substring("劍橋中譯：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to cambridgeTranslation`); }
+                        else if (content.startsWith("詞性：")) { currentEntry.partOfSpeech = content.substring("詞性：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to partOfSpeech`);}
+                        else if (content.startsWith("同義詞：")) { currentEntry.synonyms = content.substring("同義詞：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to synonyms`);}
+                        else if (content.startsWith("反義詞：")) { currentEntry.antonyms = content.substring("反義詞：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to antonyms`);}
+                        else if (content.startsWith("IPA：")) { currentEntry.ipa = content.substring("IPA：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to ipa`);}
+                        else if (content.startsWith("發音要點：")) { currentEntry.pronunciationPoints = content.substring("發音要點：".length).trim(); fieldMatchedOnThisLine = true; console.log(`      Assigned to pronunciationPoints`);}
+                        else if (content.match(/^[Yy][Oo][Uu][Gg][Ll][Ii][Ss][Hh]發音\s*\((https?:\/\/[^\s)]+)\)/i)) {
+                            const urlMatch = content.match(/\((https?:\/\/[^\s)]+)\)/);
+                            if (urlMatch && urlMatch[1]) { currentEntry.youglishLink = urlMatch[1]; console.log(`      [YouGlish Extracted User URL]`); fieldMatchedOnThisLine = true;}
+                        }
+                        else if (contentLowerNoSpace === "[youglish發音連結]" || contentLowerNoSpace === "[youglish發音]") {
+                            if (currentEntry.word) { currentEntry.youglishLink = `https://youglish.com/pronounce/${encodeURIComponent(currentEntry.word)}/english`; console.log(`      [YouGlish Generated from Marker for ${currentEntry.word}]`); fieldMatchedOnThisLine = true;}
+                        }
+                        else if (content.startsWith("例句：")) {
+                            currentDetailField = "例句";
+                            const exampleOnSameLine = content.substring("例句：".length).trim();
+                            if (exampleOnSameLine) detailBuffer.push({ text: exampleOnSameLine, indent: 4 }); 
+                            fieldMatchedOnThisLine = true;
+                            console.log(`      Starting multi-line field: "例句"`);
+                        } else if (content.startsWith("不同用法：")) {
+                            currentDetailField = "不同用法";
+                            const usageOnSameLine = content.substring("不同用法：".length).trim();
+                            if (usageOnSameLine) detailBuffer.push({ text: usageOnSameLine, indent: 4 }); 
+                            fieldMatchedOnThisLine = true;
+                            console.log(`      Starting multi-line field: "不同用法"`);
+                        }
+
+                        if (!fieldMatchedOnThisLine && content) {
+                             console.warn(`      Unrecognized single-line detail for "${currentEntry.word}": "${content}"`);
+                        }
+                    } else {
+                        console.warn(`  [MAIN DETAIL LINE DETECTED] but no currentEntry! Line: "${line}"`);
+                    }
+                } else if (trimmedLine.startsWith("- ")) { 
+                    console.log(`  [NEW ENTRY START DETECTED ("- ")] for line: "${trimmedLine}"`);
+                    completeAndPushEntry();
+                    currentEntry = { /* Initialize */ 
+                        word: "", posInitial: "", cambridgeTranslation: "", partOfSpeech: "",
+                        synonyms: "", antonyms: "", ipa: "", pronunciationPoints: "",
+                        youglishLink: "", exampleSentences: [], differentUsages: []
+                    };
+                    const wordPart = trimmedLine.substring(1).trim();
+                    const wordMatch = wordPart.match(/^(.*?)\s*\((.*?)\)\s*$/);
+                    if (wordMatch) {
+                        currentEntry.word = wordMatch[1].trim();
+                        currentEntry.posInitial = wordMatch[2].trim();
+                    } else {
+                        currentEntry.word = wordPart;
+                    }
+                    console.log(`    New currentEntry CREATED for word: "${currentEntry.word}"`);
+                } else if (trimmedLine) { 
+                    console.warn(`  [SKIPPING UNRECOGNIZED NON-BLANK LINE]: "${trimmedLine}" (CE: ${currentEntry ? currentEntry.word : 'N/A'}, DF: ${currentDetailField})`);
+                }
+            }
+            console.log("--- Loop finished. Calling completeAndPushEntry for the last entry. ---");
+            completeAndPushEntry();
+
+            console.log("--- Total entries parsed and filtered: ---", entries.length);
+            return entries.filter(entry => entry && entry.word && entry.word.trim() !== "");
+        }
+        
+        function renderCollapsibleVocabularyList(wordsArray) { 
+            const container = vocabListContainer; if (!container) return; container.innerHTML = "";
+            if (!Array.isArray(wordsArray) || wordsArray.length === 0) { container.innerHTML = "<p style='text-align:center; color: var(--secondary-color);'>此生字庫目前沒有生字。</p>"; return; }
+            wordsArray.forEach((entry, index) => { 
+                const entryDiv = document.createElement("div"); entryDiv.className = "vocab-entry collapsible";
+                const summaryDiv = document.createElement("div"); summaryDiv.className = "vocab-summary";
+                const itemContainer = document.createElement('div'); itemContainer.className = 'list-item-container';
+                const textDiv = document.createElement('div'); textDiv.className = 'list-item-text';
+                textDiv.innerHTML = `<span class="word-main">${entry.word}</span><span class="pos-short">(${(entry.posInitial || entry.partOfSpeech || 'N/A').split('/')[0].split(' ')[0]})</span>`;
+                const deleteIcon = document.createElement('span'); deleteIcon.className = 'delete-icon material-icons-outlined'; deleteIcon.textContent = 'delete_outline';
+                deleteIcon.title = "刪除此生字";
+                deleteIcon.onclick = (event) => { event.stopPropagation(); deleteVocabEntry(index); };
+                const toggleIcon = document.createElement('span'); toggleIcon.className = 'toggle-icon material-icons-outlined'; toggleIcon.textContent = 'add_circle_outline';
+                itemContainer.appendChild(textDiv); itemContainer.appendChild(deleteIcon); itemContainer.appendChild(toggleIcon);
+                summaryDiv.appendChild(itemContainer);
+                const detailsDiv = document.createElement("div"); detailsDiv.className = "vocab-details-content";
+                let dHtml = ""; 
+                if (entry.cambridgeTranslation) dHtml += `<p><span class="label">劍橋中譯：</span>${entry.cambridgeTranslation}</p>`; 
+                if (entry.partOfSpeech) dHtml += `<p><span class="label">詞性：</span>${entry.partOfSpeech}</p>`; 
+                if (entry.synonyms) dHtml += `<p><span class="label">同義詞：</span>${entry.synonyms}</p>`; 
+                if (entry.antonyms) dHtml += `<p><span class="label">反義詞：</span>${entry.antonyms}</p>`; 
+                if (entry.ipa) dHtml += `<p><span class="label">IPA：</span>${entry.ipa}</p>`; 
+                if (entry.pronunciationPoints) dHtml += `<p><span class="label">發音要點：</span>${entry.pronunciationPoints}</p>`; 
+                if (entry.youglishLink) dHtml += `<p><span class="label">YouGlish發音：</span><a href="${entry.youglishLink}" target="_blank" class="youglish-link">聽發音 (${entry.word})</a></p>`;
+                if (entry.exampleSentences && entry.exampleSentences.length > 0) { dHtml += `<p class="label">例句：</p><ul class="sub-list">`; entry.exampleSentences.forEach(ex => { dHtml += `<li class="example-pair"><div>${ex.english}</div>${ex.chinese ? `<div class="chinese-translation">- ${ex.chinese}</div>` : ''}</li>`; }); dHtml += `</ul>`; }
+                if (entry.differentUsages && entry.differentUsages.length > 0) { dHtml += `<p class="label">不同用法：</p><ul class="sub-list">`; entry.differentUsages.forEach(usage => { dHtml += `<li class="usage-item"><div><strong>${usage.usage} ${usage.pos ? `(${usage.pos})` : ''}</strong> ${usage.translation ? `- ${usage.translation}`: ''}</div>`; if (usage.examples && usage.examples.length > 0) { dHtml += `<ul class="sub-list">`; usage.examples.forEach(exU => { dHtml += `<li class="example-pair"><div>${exU.english}</div>${exU.chinese ? `<div class="example-chinese">- ${exU.chinese}</div>` : ''}</li>`; }); dHtml += `</ul>`; } dHtml += `</li>`; }); dHtml += `</ul>`; }
+                detailsDiv.innerHTML = dHtml || "<p>沒有詳細信息。</p>"; 
+                entryDiv.appendChild(summaryDiv); entryDiv.appendChild(detailsDiv); container.appendChild(entryDiv);
+                summaryDiv.addEventListener('click', (e) => { 
+                    if (e.target !== deleteIcon && !deleteIcon.contains(e.target)) {
+                         entryDiv.classList.toggle('is-expanded');
+                         toggleIcon.textContent = entryDiv.classList.contains('is-expanded') ? 'remove_circle_outline' : 'add_circle_outline';
+                    }
+                });
+            });
+        }
+        function deleteVocabEntry(index) { 
+            if (index < 0 || index >= vocabularyBank.words.length) return;
+            const wordToDelete = vocabularyBank.words[index].word;
+            if (confirm(`確定要刪除生字 "${wordToDelete}" 嗎？`)) {
+                vocabularyBank.words.splice(index, 1);
+                if (saveToBank()) {
+                    renderCollapsibleVocabularyList(vocabularyBank.words);
+                    updateFlashcardDisplay(); 
+                    alert(`生字 "${wordToDelete}" 已刪除。`);
+                } else {
+                    alert("刪除生字時儲存失敗。");
+                    loadFromBankAndDisplay(); 
+                }
+            }
+        }
+        function processAndDisplay() { 
+            if (!vocabInput) return; const text = vocabInput.value; if (!text.trim()) { alert("請輸入生字！"); return; }
+            try { currentProcessedData = parseVocabularyText(text); if (currentProcessedData.length === 0) alert("未解析到有效生字。"); else alert(`已解析 ${currentProcessedData.length} 個生字，點擊 "新增已解析"。`);
+            } catch (e) { displayDebugError("解析生字錯誤。", e); }
+        }
+        function addProcessedToBank() { 
+            if (!VOCAB_TITLE) { alert("錯誤：未選庫。"); return; } if (currentProcessedData.length === 0) { alert("請先解析生字。"); return; }
+            let added = 0; currentProcessedData.forEach(ne => { if (!vocabularyBank.words.some(ee => ee.word.toLowerCase() === ne.word.toLowerCase())) { vocabularyBank.words.push(ne); added++; } });
+            if (added > 0) { if(saveToBank()){ renderCollapsibleVocabularyList(vocabularyBank.words); updateFlashcardDisplay(); alert(`${added} 個生字已加入並儲存。`); vocabInput.value = ""; currentProcessedData = []; } else alert(`新增 ${added} 個生字，但儲存失敗。`);
+            } else { alert(`所有解析生字已存在。`); vocabInput.value = ""; currentProcessedData = []; }
+        }
+
+        function updateFlashcardDisplay() {
+            if (!flashcardContainerElement || !flashcardNavElement /*...*/) return;
+            if (!Array.isArray(vocabularyBank.words) || vocabularyBank.words.length === 0 || currentFlashcardIndex < 0 || currentFlashcardIndex >= vocabularyBank.words.length) {
+                flashcardContainerElement.style.display = 'none'; flashcardNavElement.style.display = 'none';
+                noFlashcardMessageElement.style.display = 'block'; flashcardStatusElement.textContent = ""; return;
+            }
+            flashcardContainerElement.style.display = 'block'; flashcardNavElement.style.display = 'flex'; noFlashcardMessageElement.style.display = 'none';
+            const card = vocabularyBank.words[currentFlashcardIndex]; flashcardElement.classList.remove('is-flipped');
+            const front = flashcardElement.querySelector('.flashcard-front'); const back = flashcardElement.querySelector('.flashcard-back');
+            if (front && back && card) {
+                front.querySelector('.word').textContent = card.word || "N/A"; front.querySelector('.pos').textContent = `(${(card.posInitial || card.partOfSpeech || 'N/A').split('/')[0].split(' ')[0]})`;
+                let backHtml = ""; 
+                if (card.cambridgeTranslation) backHtml += `<p><strong>中英翻譯：</strong> ${card.cambridgeTranslation}</p>`;
+                if (card.partOfSpeech) backHtml += `<p><strong>詞性：</strong> ${card.partOfSpeech}</p>`;
+                if (card.ipa) backHtml += `<p><strong>IPA：</strong> ${card.ipa}</p>`;
+                if (card.youglishLink) backHtml += `<p style="margin-top:10px;"><a href="${card.youglishLink}" target="_blank" class="youglish-link">聽YouGlish發音 (${card.word})</a></p>`;
+                if (!backHtml.trim()) backHtml = "<p>沒有更多詳細信息。</p>"; 
+                back.innerHTML = backHtml; 
+                flashcardStatusElement.textContent = `卡片 ${currentFlashcardIndex + 1} / ${vocabularyBank.words.length}`;
+            } else { console.error("Flashcard front/back or card data missing."); }
+        }
+        function flipFlashcard() { if (!flashcardElement || !vocabularyBank.words || vocabularyBank.words.length === 0) return; flashcardElement.classList.toggle('is-flipped'); }
+        function nextFlashcard() { if (!vocabularyBank.words || vocabularyBank.words.length === 0) return; currentFlashcardIndex = (currentFlashcardIndex + 1) % vocabularyBank.words.length; updateFlashcardDisplay(); }
+        function prevFlashcard() { if (!vocabularyBank.words || vocabularyBank.words.length === 0) return; currentFlashcardIndex = (currentFlashcardIndex - 1 + vocabularyBank.words.length) % vocabularyBank.words.length; updateFlashcardDisplay(); }
+
+        // --- Quiz Parsing and Display (WITH MC SUPPORT) ---
+        function parseQuizText(text) {
+            console.log("--- Starting parseQuizText (DEBUGGING OPTION LINES v3) ---");
+            const lines = text.split('\n');
+            if (lines.length < 3) {
+                alert("練習題內容過少。需標題、至少1題、'答案：'部分及對應答案。");
+                return null;
+            }
+            const quizTitle = lines[0].trim();
+            if (!quizTitle) {
+                alert("練習題標題不能為空。");
+                return null;
+            }
+
+            const questions = [];
+            let answersMap = new Map();
+            let parsingMode = "questions";
+            const answerMarkerRegex = /^(?:\W*|【)?(?:答案：?|answers:)(?:\W*|】)?$/i;
+            let currentQuestion = null;
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i]; 
+                const trimmedLine = line.trim();
+
+                if (answerMarkerRegex.test(trimmedLine)) {
+                    if (currentQuestion) {
+                        if (!currentQuestion.type) currentQuestion.type = "FILL_IN";
+                        questions.push(currentQuestion);
+                        currentQuestion = null;
+                    }
+                    parsingMode = "answers";
+                    console.log(`  Switched to answers mode on line: "${trimmedLine}" (Marker Matched: ${answerMarkerRegex.test(trimmedLine)})`);
+                    continue;
+                }
+
+                if (parsingMode === "answers") {
+                    if (!trimmedLine) continue;
+                    const aMatch = trimmedLine.match(/^(\d+)\.\s*(.+)/);
+                    if (aMatch) {
+                        const id = parseInt(aMatch[1]);
+                        const answerText = aMatch[2].trim();
+                        const answerOptions = answerText.split('/').map(a => a.trim().toUpperCase()).filter(a => a);
+                        if (answerOptions.length > 0) {
+                            answersMap.set(id, answerOptions);
+                            console.log(`  Parsed answer for Q${id}: ${answerOptions.join(' / ')}`);
+                        }
+                    } else {
+                        console.warn(`  Skipping non-answer line in answers mode: "${trimmedLine}"`);
+                    }
+                    continue;
+                }
+
+                const qMatch = trimmedLine.match(/^(\d+)\.\s*(.+)/);
+                const optionRegex = /^\s{2,}-\s*([\(（])\s*([A-Za-z])\s*[\)）]\s*(.+)/;
+                let optionMatchResult = null;
+
+                if (line.match(/^\s+-/)) {
+                    console.log(`  [DEBUG OPTION CHECK] Line ${i+1}:`);
+                    console.log(`    Raw Line: "${line}"`);
+                    let charCodes = "";
+                    for(let k=0; k < Math.min(line.length, 10); k++) {
+                        charCodes += `${line.charCodeAt(k)} (${line[k]}), `;
+                    }
+                    console.log(`    Initial Char Codes: ${charCodes}`);
+                    
+                    optionMatchResult = line.match(optionRegex);
+                    console.log(`    Attempting optionRegex match. Result:`, optionMatchResult);
+                }
+
+                if (qMatch) {
+                    if (currentQuestion) {
+                        if (!currentQuestion.type) currentQuestion.type = "FILL_IN";
+                        questions.push(currentQuestion);
+                    }
+                    const id = parseInt(qMatch[1]);
+                    const questionText = qMatch[2].trim();
+                    currentQuestion = { id, questionText, type: "FILL_IN", options: [], correctAnswers: [] };
+                    parsingMode = "questions";
+                    console.log(`  Started new question Q${id}: "${questionText}"`);
+                } else if (currentQuestion && optionMatchResult) { 
+                    currentQuestion.type = "MC";
+                    const label = optionMatchResult[2].toUpperCase(); 
+                    const optionText = optionMatchResult[3].trim();   
+                    currentQuestion.options.push({ label, text: optionText });
+                    parsingMode = "options";
+                    console.log(`    SUCCESS: Added option (${label}) "${optionText}" to Q${currentQuestion.id}`);
+                } else if (trimmedLine && currentQuestion) {
+                    if (parsingMode === "options" && !optionMatchResult && line.match(/^\s+-/)) {
+                         console.warn(`    WARNING: Line ${i+1} looked like an option for Q${currentQuestion.id} but failed regex: "${line}"`);
+                    }
+                } else if (trimmedLine) {
+                    console.warn(`  Skipping unrecognized line: "${trimmedLine}"`);
+                }
+            }
+
+            if (currentQuestion) {
+                if (!currentQuestion.type) currentQuestion.type = "FILL_IN";
+                questions.push(currentQuestion);
+            }
+            console.log("  Finished parsing questions and options.");
+
+            questions.forEach(q => {
+                if (answersMap.has(q.id)) {
+                    q.correctAnswers = answersMap.get(q.id);
+                } else {
+                     console.warn(`  No answer found for question ${q.id} ("${q.questionText.substring(0,20)}..."). It will be unanswerable.`);
+                }
+            });
+            
+            const finalQuestions = questions.filter(q => q.correctAnswers.length > 0);
+
+            if (questions.length > 0 && finalQuestions.length === 0) {
+                 alert("解析到的問題沒有找到對應的答案，請檢查答案區的編號和格式，以及 '答案：' (或類似) 標記是否正確。");
+                 console.warn("All questions were filtered out because no answers were linked. AnswersMap size:", answersMap.size, "Questions parsed:", questions.length);
+                 return null;
+            }
+            if (finalQuestions.length !== questions.length && questions.length > 0) {
+                console.warn("  部分問題因未找到對應答案而被移除。");
+                 alert("部分問題因未找到對應答案而被忽略，請檢查答案區的編號。");
+            }
+
+            if (finalQuestions.length === 0 && questions.length === 0) { 
+                alert("未能解析到任何有效的練習題。請確保：\n1. 標題在第一行。\n2. 問題格式：數字. 問題內容。\n3. MC題選項格式：  - (A) 選項內容 (至少兩個空格開頭，括號可全形或半形)\n4. 必須有 '答案：' (或'Answers:' 或 '【答案】') 行。\n5. 答案格式：數字. 答案內容 (MC題答案為選項字母)。");
+                return null;
+            }
+            
+            console.log("--- Parsed quiz object: ---", { quizTitle, questions: finalQuestions });
+            return { quizTitle, questions: finalQuestions, userAnswers: [], isSubmitted: false };
+        }
+        function processAndAddQuiz() { 
+            if (!quizInput) return; const text = quizInput.value; if (!text.trim()) { alert("請輸入練習題！"); return; }
+            currentProcessedQuiz = parseQuizText(text);
+            if (currentProcessedQuiz) {
+                if (!Array.isArray(vocabularyBank.quizzes)) vocabularyBank.quizzes = [];
+                if (vocabularyBank.quizzes.some(q => q.quizTitle === currentProcessedQuiz.quizTitle)) if (!confirm(`已存在標題 "${currentProcessedQuiz.quizTitle}"。仍要新增？`)){ currentProcessedQuiz = null; return; }
+                vocabularyBank.quizzes.push(currentProcessedQuiz);
+                if (saveToBank()) { alert(`練習題 "${currentProcessedQuiz.quizTitle}" 已新增儲存。`); renderQuizList(vocabularyBank.quizzes); quizInput.value = ""; currentProcessedQuiz = null; }
+                else { vocabularyBank.quizzes.pop(); alert("練習題已解析，但儲存失敗。"); }
+            } else console.log("processAndAddQuiz: parseQuizText returned null, an alert was likely shown by the parser.");
+        }
+        function renderQuizList(quizzesArray) { 
+            if (!quizListContainer) return; quizListContainer.innerHTML = "";
+            if (!Array.isArray(quizzesArray) || quizzesArray.length === 0) { quizListContainer.innerHTML = "<p>此字庫暫無練習題。</p>"; return; }
+            quizzesArray.forEach((quiz, index) => {
+                const quizItemDiv = document.createElement('div'); quizItemDiv.className = 'quiz-item-summary';
+                const itemContainer = document.createElement('div'); itemContainer.className = 'list-item-container';
+                const textDiv = document.createElement('div'); textDiv.className = 'list-item-text'; textDiv.textContent = quiz.quizTitle || `練習題 ${index + 1}`;
+                textDiv.onclick = () => startQuiz(quiz); 
+                const deleteIcon = document.createElement('span'); deleteIcon.className = 'delete-icon material-icons-outlined'; deleteIcon.textContent = 'delete_outline';
+                deleteIcon.title = "刪除此練習題";
+                deleteIcon.onclick = (event) => { event.stopPropagation(); deleteQuiz(index); };
+                itemContainer.appendChild(textDiv); itemContainer.appendChild(deleteIcon);
+                quizItemDiv.appendChild(itemContainer);
+                quizListContainer.appendChild(quizItemDiv);
+            });
+        }
+        function deleteQuiz(index) { 
+            if (index < 0 || index >= vocabularyBank.quizzes.length) return;
+            const quizTitleToDelete = vocabularyBank.quizzes[index].quizTitle;
+            if (confirm(`確定要刪除練習題 "${quizTitleToDelete}" 嗎？`)) {
+                vocabularyBank.quizzes.splice(index, 1);
+                if (saveToBank()) {
+                    renderQuizList(vocabularyBank.quizzes);
+                    alert(`練習題 "${quizTitleToDelete}" 已刪除。`);
+                } else {
+                    alert("刪除練習題時儲存失敗。");
+                    loadFromBankAndDisplay(); 
+                }
+            }
+        }
+        
+        function startQuiz(quiz) {
+            currentQuizForAnswering = JSON.parse(JSON.stringify(quiz));
+            console.log("--- Starting Quiz ---");
+            console.log("Original quiz object passed to startQuiz:", JSON.parse(JSON.stringify(quiz))); 
+            console.log("Current quiz for answering (after deep copy):", currentQuizForAnswering); 
+            
+            currentQuizForAnswering.userAnswers = []; 
+            currentQuizForAnswering.isSubmitted = false;
+
+            if (currentQuizTitleDisplay) currentQuizTitleDisplay.textContent = currentQuizForAnswering.quizTitle;
+            if (quizAnsweringArea) quizAnsweringArea.innerHTML = '';
+
+            currentQuizForAnswering.questions.forEach((q, index) => { 
+                console.log(`  Rendering Q${q.id} (index ${index}): Type - ${q.type}, Options - ${q.options ? q.options.length : 'N/A'}`);
+                const qDiv = document.createElement('div'); 
+                qDiv.className = 'quiz-question-item';
+                let questionHTML = `<p><strong>${q.id}.</strong> ${q.questionText}</p>`;
+
+                if (q.type === "MC" && q.options && q.options.length > 0) {
+                    console.log(`    Q${q.id} is MC. Rendering options.`);
+                    questionHTML += `<div class="quiz-options-group" id="quiz-q-${q.id}-options">`;
+                    q.options.forEach(opt => {
+                        questionHTML += `
+                            <label class="quiz-option-label">
+                                <input type="radio" name="quiz-q-${q.id}" value="${opt.label}">
+                                (${opt.label}) ${opt.text}
+                            </label>`;
+                    });
+                    questionHTML += `</div>`;
+                } else { 
+                    console.log(`    Q${q.id} is Fill-in or MC without options. Rendering input text.`);
+                    questionHTML += `<input type="text" id="quiz-q-${q.id}" placeholder="請輸入答案...">`;
+                }
+                questionHTML += `<div class="feedback" id="feedback-q-${q.id}"></div>`;
+                questionHTML += `<div class="correct-answer-display hidden" id="correct-answer-q-${q.id}"></div>`;
+                
+                qDiv.innerHTML = questionHTML;
+                quizAnsweringArea.appendChild(qDiv);
+            });
+
+            if (quizAnsweringSection) quizAnsweringSection.classList.remove('hidden');
+        }
+
+        function hideQuizAnsweringArea() { if (quizAnsweringSection) quizAnsweringSection.classList.add('hidden'); currentQuizForAnswering = null; }
+        function submitQuiz() { 
+            if (!currentQuizForAnswering) return; 
+            currentQuizForAnswering.isSubmitted = true; 
+            let correctCt = 0;
+
+            currentQuizForAnswering.questions.forEach(q => {
+                const fbEl = document.getElementById(`feedback-q-${q.id}`);
+                const caEl = document.getElementById(`correct-answer-q-${q.id}`);
+                let userAnswer = "";
+
+                if (q.type === "MC") {
+                    const selectedOption = quizAnsweringArea.querySelector(`input[name="quiz-q-${q.id}"]:checked`);
+                    if (selectedOption) {
+                        userAnswer = selectedOption.value; 
+                    }
+                    const radioButtons = quizAnsweringArea.querySelectorAll(`input[name="quiz-q-${q.id}"]`);
+                    radioButtons.forEach(rb => rb.disabled = true);
+                } else { 
+                    const inputEl = document.getElementById(`quiz-q-${q.id}`);
+                    if (inputEl) {
+                        userAnswer = inputEl.value.trim();
+                        inputEl.disabled = true;
+                    }
+                }
+                
+                const uaIdx = currentQuizForAnswering.userAnswers.findIndex(ua => ua.questionId === q.id);
+                if (uaIdx > -1) {
+                    currentQuizForAnswering.userAnswers[uaIdx].answer = userAnswer;
+                } else {
+                    currentQuizForAnswering.userAnswers.push({ questionId: q.id, answer: userAnswer });
+                }
+
+                if (fbEl && caEl) {
+                    const isCorrect = q.correctAnswers.some(ans => ans.toLowerCase() === userAnswer.toLowerCase());
+                    fbEl.innerHTML = "";
+                    caEl.classList.add('hidden');
+                    caEl.textContent = '';
+
+                    if (isCorrect) {
+                        fbEl.innerHTML = '<span class="material-icons-outlined">check_circle</span> 正確！';
+                        fbEl.className = 'feedback correct';
+                        correctCt++;
+                    } else {
+                        fbEl.innerHTML = '<span class="material-icons-outlined">cancel</span> 錯誤。';
+                        fbEl.className = 'feedback incorrect';
+                        caEl.textContent = `正確答案：${q.correctAnswers.join(' / ')}`;
+                        caEl.classList.remove('hidden');
+                    }
+                }
+            });
+            alert(`你答對了 ${correctCt} / ${currentQuizForAnswering.questions.length} 題！`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("--- DOMContentLoaded ---");
+            titleEntrySection = document.getElementById('titleEntrySection');
+            vocabDetailsSection = document.getElementById('vocabDetailsSection');
+            vocabTitleInput = document.getElementById('vocabTitleInput');
+            existingBanksListContainer = document.getElementById('existingBanksListContainer');
+            currentVocabTitleDisplay = document.getElementById('currentVocabTitleDisplay');
+            activeVocabTitleForList = document.getElementById('activeVocabTitleForList');
+            vocabListContainer = document.getElementById('vocabListContainer');
+            vocabInput = document.getElementById('vocabInput');
+            flashcardContainerElement = document.getElementById('flashcardContainerElement');
+            flashcardNavElement = document.querySelector('#flashcardDisplayArea .flashcard-nav');
+            noFlashcardMessageElement = document.getElementById('noFlashcardMessage');
+            flashcardStatusElement = document.getElementById('flashcardStatus');
+            flashcardElement = document.getElementById('flashcardElement');
+            debugErrorDisplayElement = document.getElementById('debugErrorDisplay');
+            addVocabSectionHeader = document.getElementById('addVocabSectionHeader');
+            addVocabSectionContent = document.getElementById('addVocabSectionContent');
+            addQuizSectionHeader = document.getElementById('addQuizSectionHeader');
+            addQuizSectionContent = document.getElementById('addQuizSectionContent');
+            quizInput = document.getElementById('quizInput');
+            quizListContainer = document.getElementById('quizListContainer');
+            quizAnsweringSection = document.getElementById('quizAnsweringSection');
+            currentQuizTitleDisplay = document.getElementById('currentQuizTitleDisplay');
+            quizAnsweringArea = document.getElementById('quizAnsweringArea');
+
+            if (!titleEntrySection || !vocabDetailsSection || !vocabTitleInput || !debugErrorDisplayElement || !addVocabSectionHeader || !addVocabSectionContent || !addQuizSectionHeader || !addQuizSectionContent || !quizInput || !quizListContainer || !quizAnsweringSection || !currentVocabTitleDisplay || !activeVocabTitleForList || !vocabListContainer || !vocabInput || !flashcardContainerElement || !flashcardNavElement || !noFlashcardMessageElement || !flashcardStatusElement || !flashcardElement) {
+                console.error("CRITICAL ERROR: Essential DOM elements missing."); alert("頁面載入嚴重錯誤：元件缺失。");
+                if(debugErrorDisplayElement) { debugErrorDisplayElement.textContent = "頁面載入錯誤：元件缺失！檢查HTML ID。"; debugErrorDisplayElement.classList.remove('hidden');}
+                return; 
+            }
+            console.log("Core DOM elements fetched.");
+
+            function setupCollapsible(headerEl, contentEl, iconSel) {
+                if(headerEl && contentEl) {
+                    contentEl.classList.add('is-collapsed'); 
+                    const icon = headerEl.querySelector(iconSel); 
+                    if (icon) icon.textContent = 'expand_more';
+                    headerEl.addEventListener('click', () => {
+                        const isCurrentlyCollapsed = contentEl.classList.contains('is-collapsed');
+                        contentEl.classList.toggle('is-collapsed'); 
+                        if (icon) icon.textContent = isCurrentlyCollapsed ? 'expand_less' : 'expand_more';
+                    });
+                }
+            }
+            setupCollapsible(addVocabSectionHeader, addVocabSectionContent, '.toggle-icon-section');
+            setupCollapsible(addQuizSectionHeader, addQuizSectionContent, '.toggle-icon-section');
+
+            titleEntrySection.classList.remove('hidden'); vocabDetailsSection.classList.add('hidden'); debugErrorDisplayElement.classList.add('hidden');
+            listExistingBanks();
+
+            function autoResizeTextarea(textarea) {
+                textarea.style.height = 'auto'; 
+                let newHeight = textarea.scrollHeight;
+                const maxHeightStyle = window.getComputedStyle(textarea).maxHeight;
+                if (maxHeightStyle && maxHeightStyle !== 'none') { 
+                    const maxHeight = parseInt(maxHeightStyle, 10);
+                    if (!isNaN(maxHeight) && newHeight > maxHeight) {
+                        newHeight = maxHeight;
+                    }
+                }
+                textarea.style.height = newHeight + 'px';
+            }
+            if (vocabInput) vocabInput.addEventListener('input', () => autoResizeTextarea(vocabInput));
+            if (quizInput) quizInput.addEventListener('input', () => autoResizeTextarea(quizInput));
+            
+            if (flashcardElement) flashcardElement.addEventListener('click', flipFlashcard);
+            if (vocabTitleInput) vocabTitleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); initializeVocabDetails(); } });
+            console.log("Initialization complete.");
+        });
+    </script>
+</body>
+</html>
